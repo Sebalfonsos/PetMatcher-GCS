@@ -1,0 +1,19 @@
+# Secretos locales
+.env
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Flutter
+app/.dart_tool/
+app/build/
+app/.flutter-plugins*
+app/android/local.properties
+*.iml
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

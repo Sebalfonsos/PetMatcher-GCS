@@ -1,0 +1,60 @@
+{
+  "techo_r2_observable": 0.7278,
+  "techo_r2_con_latentes": 0.9629,
+  "mejor_modelo": "HistGradientBoosting",
+  "por_paciente": [
+    {
+      "modelo": "Regresion Lineal",
+      "R2": 0.6582,
+      "MAE": 9.7089
+    },
+    {
+      "modelo": "KNN",
+      "R2": 0.7392,
+      "MAE": 8.4721
+    },
+    {
+      "modelo": "Arbol de Decision",
+      "R2": 0.6518,
+      "MAE": 9.7031
+    },
+    {
+      "modelo": "RandomForest",
+      "R2": 0.7549,
+      "MAE": 8.1612
+    },
+    {
+      "modelo": "HistGradientBoosting",
+      "R2": 0.7787,
+      "MAE": 7.7932
+    }
+  ],
+  "por_animal": [
+    {
+      "modelo": "Regresion Lineal",
+      "R2": 0.6104,
+      "MAE": 10.3593
+    },
+    {
+      "modelo": "KNN",
+      "R2": 0.5412,
+      "MAE": 11.3089
+    },
+    {
+      "modelo": "Arbol de Decision",
+      "R2": 0.4203,
+      "MAE": 12.6391
+    },
+    {
+      "modelo": "RandomForest",
+      "R2": 0.5901,
+      "MAE": 10.6433
+    },
+    {
+      "modelo": "HistGradientBoosting",
+      "R2": 0.7052,
+      "MAE": 9.065
+    }
+  ],
+  "nota": "Dataset SINTETICO. Las metricas miden que el pipeline funciona, no eficacia clinica."
+}

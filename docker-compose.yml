@@ -1,0 +1,69 @@
+# PetMatcher - orquestación de servicios de servidor 
+# La app Flutter corre nativa y apunta a http://localhost:8000.
+services:
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    volumes:
+      # Modelos v3 (perfil del paciente por ADHD-RS, 25 features): entrenados con
+      # dataset_synthetic/train_v3.py. Ver plan.md §2.3. Los v2 (24 features, perfil
+      # de 6 niveles) YA NO son compatibles con la API: esperan otras columnas.
+      - ./dataset_synthetic/v3/models:/models:ro
+    environment:
+      PETMATCHER_MODELS_DIR: /models
+      # La efectividad final la define SOLO HistGradientBoosting: es el mejor por
+      # validación cruzada agrupada (mejor R² por validación agrupada, ver train_v3.py).
+      # `por_modelo` sigue devolviendo los cuatro, para comparar en la consola.
+      # Dejar vacío o quitar esta línea vuelve al promedio de los cargados.
+      PETMATCHER_PREDICT_MODEL: HistGradientBoosting
+      # LLM local (LM Studio) para POST /explain. Desde el contenedor, el host se
+      # alcanza por host.docker.internal, NO por localhost. Si no responde, /explain
+      # devuelve igual la evidencia calculada.
+      LMSTUDIO_URL: http://host.docker.internal:4321
+      LMSTUDIO_MODEL: local-model
+      # Para la siguiente fase (CRUD): conexión a Postgres.
+      DATABASE_URL: postgresql+asyncpg://petmatcher:petmatcher@db:5432/petmatcher
+      # Autenticacion (ver plan.md §4.3). Los valores viven en .env (no versionado).
+      # Sin PETMATCHER_JWT_SECRET las sesiones se cierran en cada reinicio.
+      PETMATCHER_JWT_SECRET: ${PETMATCHER_JWT_SECRET:-}
+      # Solo se usan si la tabla de usuarios esta vacia: crean el primer administrador.
+      PETMATCHER_ADMIN_USER: ${PETMATCHER_ADMIN_USER:-admin}
+      PETMATCHER_ADMIN_PASSWORD: ${PETMATCHER_ADMIN_PASSWORD:-}
+    extra_hosts:
+      # Necesario en Linux para que host.docker.internal resuelva al host.
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - db
+
+  # Consola de exploración del modelo (equivalente a ml_model/app.py, pero
+  # consumiendo la API en vez de cargar los .pkl: evita duplicar el preprocesado,
+  #http://localhost:8501
+  streamlit:
+    build: ./streamlit_app
+    ports:
+      - "8501:8501"
+    volumes:
+      # Monta el fuente en dev: Streamlit recarga solo al guardar, sin rebuild.
+      # (Sin esto, el código vive dentro de la imagen y `restart` no toma cambios.)
+      - ./streamlit_app:/app
+    environment:
+      # Nombre del servicio en la red interna de compose, no localhost.
+      PETMATCHER_API_URL: http://api:8000
+    depends_on:
+      - api
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: petmatcher
+      POSTGRES_PASSWORD: petmatcher
+      POSTGRES_DB: petmatcher
+    # Puerto no expuesto al host (5432 suele estar ocupado en Windows). El servicio
+    # 'api' lo alcanza internamente vía la red de compose. Para conectarte desde el
+    # host con un cliente, mapea p.ej. "5433:5432".
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+volumes:
+  pgdata:
